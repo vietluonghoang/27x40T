@@ -17,6 +17,7 @@ public class DailyRecord {
 	public final String PRIZE_6 = "giải sáu";
 	public final String PRIZE_7 = "giải bảy";
 	private long timestamp;
+	private String date = "";
 	private String keyString = "";
 	private HashMap<String, ArrayList<String>> prizeTable;
 	private String[] prizeList = { PRIZE_SPECIAL, PRIZE_1, PRIZE_2, PRIZE_3, PRIZE_4, PRIZE_5, PRIZE_6, PRIZE_7 };
@@ -29,7 +30,12 @@ public class DailyRecord {
 		return timestamp;
 	}
 
+	public String getDate() {
+		return date;
+	}
+
 	public void setTimestamp(String dateInDDMMYYYFormat, String separator) {
+		this.date = dateInDDMMYYYFormat.trim();
 		this.timestamp = new Utils().getNumberOfDaySinceEpochTime(dateInDDMMYYYFormat, separator);
 	}
 

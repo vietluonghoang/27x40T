@@ -13,10 +13,12 @@ import org.openqa.selenium.support.ui.Select;
 import drivers.RunningDriver;
 import entities.DailyRecord;
 import entities.GeneralSettings;
+import gui.MainGUI;
 
 public class ResultCrawler implements Runnable {
 	private WebDriver driver;
 	private ArrayList<DailyRecord> records;
+	private MainGUI parent;
 
 	public ResultCrawler() {
 		try {
@@ -29,11 +31,12 @@ public class ResultCrawler implements Runnable {
 		}
 	}
 
-	public ResultCrawler(ArrayList<DailyRecord> records) {
+	public ResultCrawler(ArrayList<DailyRecord> records, MainGUI parent) {
 		try {
 			driver = new RunningDriver().chromeDriver();
 			DriverCenter.appendDriver(driver);
 			this.records = records;
+			this.parent = parent;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -56,6 +59,7 @@ public class ResultCrawler implements Runnable {
 		String xpathToResultDayCount = "//form[@id='so-ket-qua']/div/div/input[@id='count']";
 		String xpathToResultSubmitButton = "//form[@id='so-ket-qua']/div/button[@type='submit' and @class='btn btn-primary']";
 
+		MessageCenter.appendMessageToSideLog("-- Đang cài đặt khoảng thời gian... ");
 		Select source = new Select(driver.findElement(By.xpath(xpathToResultSource)));
 		source.selectByValue("mb");
 		WebElement date = driver.findElement(By.xpath(xpathToReaultDate));
@@ -68,6 +72,7 @@ public class ResultCrawler implements Runnable {
 		count.sendKeys(GeneralSettings.maxResultCount + "");
 		count.click(); // to dismiss the date picker
 		driver.findElement(By.xpath(xpathToResultSubmitButton)).click();
+		MessageCenter.appendMessageToSideLog("-- Đang chờ máy chủ cập nhật... ");
 	}
 
 	private void getResultDetails() {
@@ -76,43 +81,47 @@ public class ResultCrawler implements Runnable {
 		String xpathToResultPrize = "./tbody/tr/td/div/div[contains(@id,'rs')]";
 		String xapthToResultPrizeTitle = "./../../../td[1]";
 		for (WebElement detailsTable : driver.findElements(By.xpath(xpathToResultDetails))) {
-			System.out.println("---- init DailyRecord");
+//			System.out.println("---- init DailyRecord");
 			DailyRecord record = new DailyRecord();
 			for (WebElement resultDate : detailsTable.findElements(By.xpath(xpathToResultDate))) {
-				System.out.println("----");
+//				System.out.println("----");
 				String date = resultDate.getText();
-				System.out.println("Result Date: " + date);
+//				System.out.println("Result Date: " + date);
 				record.setTimestamp(date.split("ngày")[1], "-");
 			}
 			for (WebElement prize : detailsTable.findElements(By.xpath(xpathToResultPrize))) {
 				String prizeName = "";
 				String prizeDetails = "";
 				for (WebElement prizeTitle : prize.findElements(By.xpath(xapthToResultPrizeTitle))) {
-					System.out.println("----");
+//					System.out.println("----");
 					prizeName = prizeTitle.getText().toLowerCase();
-					System.out.println("Prize title: " + prizeName);
+//					System.out.println("Prize title: " + prizeName);
 				}
-				System.out.println("----");
+//				System.out.println("----");
 				prizeDetails = prize.getText().toLowerCase();
-				System.out.println("Prize: " + prizeDetails);
+//				System.out.println("Prize: " + prizeDetails);
 				record.setPrize(prizeName, prizeDetails);
 			}
 
 			records.add(record);
+			MessageCenter.appendMessageToSideLog("-- Đang quét kết quả: " + record.getDate());
 		}
 
-		for (DailyRecord dailyRecord : records) {
-			System.out.println("++++++++");
-			System.out.println("Date: " + dailyRecord.getTimestamp());
-			System.out.println("Key: " + dailyRecord.getKeyString());
+		// callback to update main view
+		parent.updateTableView();
 
-			for (String przName : dailyRecord.getPrizeList()) {
-				System.out.println("- " + przName);
-				for (String prz : dailyRecord.getPrize(przName)) {
-					System.out.println(prz);
-				}
-			}
-		}
+//		for (DailyRecord dailyRecord : records) {
+//			System.out.println("++++++++");
+//			System.out.println("Date: " + dailyRecord.getTimestamp());
+//			System.out.println("Key: " + dailyRecord.getKeyString());
+//
+//			for (String przName : dailyRecord.getPrizeList()) {
+//				System.out.println("- " + przName);
+//				for (String prz : dailyRecord.getPrize(przName)) {
+//					System.out.println(prz);
+//				}
+//			}
+//		}
 	}
 
 }

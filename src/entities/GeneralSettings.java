@@ -8,6 +8,8 @@ public class GeneralSettings {
 
 	public static boolean isStartedRunning = false;
 
+	public static boolean isDailyRecordSortingByAsending = true;
+
 	public static String resultPageUrl = "https://ketqua1.net/so-ket-qua";
 	public static int maxResultCount = 3;
 }
