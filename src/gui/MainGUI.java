@@ -5,22 +5,29 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.GridLayout;
+import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableColumn;
@@ -31,14 +38,10 @@ import controllers.MessageCenter;
 import controllers.ResultCrawler;
 import entities.DailyRecord;
 import entities.GeneralSettings;
+import entities.customized.ImageViewport;
 import models.CenterViewTableModel;
 import utils.DailyRecordOrderingByDateComparator;
-import javax.swing.JCheckBox;
-import javax.swing.border.TitledBorder;
-import java.awt.FlowLayout;
-import javax.swing.JTextArea;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.JRadioButton;
+import utils.Utils;
 
 public class MainGUI {
 
@@ -52,7 +55,8 @@ public class MainGUI {
 	private JPanel panelSettings;
 	private JPanel panelDayCountSettings;
 	private JPanel panelSortSettings;
-	private JPanel panel_2;
+	private JPanel panelAlwaysOnTopSettings;
+	private JCheckBox cbAlwaysOnTop;
 	private JPanel panel_3;
 	private JPanel panelDayCountTitle;
 	private JPanel panelDayCountValue;
@@ -81,6 +85,7 @@ public class MainGUI {
 	private JScrollPane scrollPaneLogMessageView;
 	private JTextArea taLogMessageView;
 	private JCheckBox chckbxAutoScrollLogs;
+	private Utils utils = new Utils();
 
 	/**
 	 * Launch the application.
@@ -110,8 +115,28 @@ public class MainGUI {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 1000, 391);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setTitle("K33 - 27x40");
+		frame.setBounds(100, 100, 1000, 550);
+		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		frame.addWindowListener(new java.awt.event.WindowAdapter() {
+			@Override
+			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+				try {
+					if (JOptionPane.showConfirmDialog(frame, "Bạn có chắc là muốn đóng ứng dụng không?", "Đóng?",
+							JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, utils.getImageIconFromResourceFile(
+									GeneralSettings.defaultPopupIcon128)) == JOptionPane.YES_OPTION) {
+						DriverCenter.terminateAllDrivers();
+						System.exit(0);
+					}
+				} catch (HeadlessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
 
 		initTopPanel();
 		initLeftPanel();
@@ -160,7 +185,7 @@ public class MainGUI {
 		panelLeft = new JPanel();
 		frame.getContentPane().add(panelLeft, BorderLayout.WEST);
 		panelLeft.setLayout(new GridLayout(1, 0, 0, 0));
-		panelLeft.setPreferredSize(new Dimension(230, 600));
+		panelLeft.setPreferredSize(new Dimension(230, 300));
 
 		panelSettings = new JPanel();
 		panelSettings.setBorder(
@@ -224,8 +249,18 @@ public class MainGUI {
 		});
 		panelSortSettingsValue.add(chckbxSortSettingsValue);
 
-		panel_2 = new JPanel();
-		panelSettings.add(panel_2);
+		panelAlwaysOnTopSettings = new JPanel();
+		panelSettings.add(panelAlwaysOnTopSettings);
+		JCheckBox cbAlwaysOnTop = new JCheckBox("Giữ cửa sổ luôn ở trên ");
+		cbAlwaysOnTop.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent arg0) {
+				// TODO Auto-generated method stub
+				setAlwaysOnTop(cbAlwaysOnTop.isSelected());
+			}
+		});
+		panelAlwaysOnTopSettings.setLayout(new GridLayout(0, 1, 0, 0));
+		panelAlwaysOnTopSettings.add(cbAlwaysOnTop);
 
 		panel_3 = new JPanel();
 		panelSettings.add(panel_3);
@@ -235,7 +270,7 @@ public class MainGUI {
 		panelRight = new JPanel();
 		frame.getContentPane().add(panelRight, BorderLayout.EAST);
 		panelRight.setLayout(new BorderLayout(0, 0));
-		panelRight.setPreferredSize(new Dimension(300, 600));
+		panelRight.setPreferredSize(new Dimension(300, 300));
 
 		panelLogMessageViewTop = new JPanel();
 		panelRight.add(panelLogMessageViewTop, BorderLayout.NORTH);
@@ -267,11 +302,13 @@ public class MainGUI {
 		panelLogMessageViewRight.add(panel_6);
 
 		panelLogMessageView = new JPanel();
-		panelLogMessageView.setBorder(new TitledBorder(null, "Logs", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panelLogMessageView
+				.setBorder(new TitledBorder(null, "Logs", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		panelRight.add(panelLogMessageView, BorderLayout.CENTER);
 		panelLogMessageView.setLayout(new BorderLayout(0, 0));
 
 		panelLogMessageScrollView = new JPanel();
+		panelLogMessageScrollView.setBackground(Color.BLACK);
 		panelLogMessageView.add(panelLogMessageScrollView, BorderLayout.CENTER);
 		panelLogMessageScrollView.setLayout(new GridLayout(0, 1, 0, 0));
 
@@ -305,8 +342,16 @@ public class MainGUI {
 		taLogMessageView.setWrapStyleWord(true);
 		taLogMessageView.setLineWrap(true);
 		taLogMessageView.setEditable(false);
+		taLogMessageView.setOpaque(false);
+		taLogMessageView.setBackground(new Color(0, 0, 0, 0));
+		taLogMessageView.setForeground(new Color(255, 255, 255, 255));
 		MessageCenter.setMessageSideTextArea(taLogMessageView);
-		scrollPaneLogMessageView = new JScrollPane(taLogMessageView);
+		scrollPaneLogMessageView = new JScrollPane();
+		scrollPaneLogMessageView.setViewport(new ImageViewport());
+		scrollPaneLogMessageView.setViewportView(taLogMessageView);
+		scrollPaneLogMessageView.setBackground(new Color(0, 0, 0, 255));
+		scrollPaneLogMessageView.setOpaque(false);
+		scrollPaneLogMessageView.getViewport().setOpaque(false);
 		scrollPaneLogMessageView.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		panelLogMessageScrollView.add(scrollPaneLogMessageView);
 
@@ -369,5 +414,9 @@ public class MainGUI {
 			col.setMaxWidth(60);
 			col.setPreferredWidth(50);
 		}
+	}
+
+	private void setAlwaysOnTop(boolean isOnTop) {
+		frame.setAlwaysOnTop(isOnTop);
 	}
 }
