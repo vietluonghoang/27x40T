@@ -11,7 +11,8 @@ public class GeneralSettings {
 	public static boolean isDailyRecordSortingByAsending = true;
 
 	public static String resultPageUrl = "https://ketqua1.net/so-ket-qua";
-	public static int maxResultCount = 3;
+	public static int defaultDaysOfResultCount = 6;
+	public static int defaultEndDateOffset = 0;
 	public static String defaultLogViewBackgroundImage = "kc33logo.png";
 	public static String defaultPopupIcon128 = "kc33logo_icon_128x128.png";
 	public static String defaultPopupIcon64 = "kc33logo_icon_64x64.png";

@@ -11,19 +11,25 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.ListModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
@@ -38,10 +44,17 @@ import controllers.MessageCenter;
 import controllers.ResultCrawler;
 import entities.DailyRecord;
 import entities.GeneralSettings;
+import entities.customized.ColorizedCellRenderer;
 import entities.customized.ImageViewport;
 import models.CenterViewTableModel;
 import utils.DailyRecordOrderingByDateComparator;
 import utils.Utils;
+import javax.swing.JComboBox;
+import javax.swing.DefaultComboBoxModel;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import java.awt.Font;
 
 public class MainGUI {
 
@@ -53,15 +66,19 @@ public class MainGUI {
 	private JPanel panelBottom;
 	private JPanel panelCenter;
 	private JPanel panelSettings;
-	private JPanel panelDayCountSettings;
+	private JPanel panelDateFromSettings;
+	private JPanel panelDateEndSettings;
 	private JPanel panelSortSettings;
 	private JPanel panelAlwaysOnTopSettings;
 	private JCheckBox cbAlwaysOnTop;
-	private JPanel panel_3;
-	private JPanel panelDayCountTitle;
-	private JPanel panelDayCountValue;
-	private JLabel lblDayCountTitle;
-	private JSpinner spinnerDayCount;
+	private JPanel panelMessage;
+	private JLabel lblErrorMessage;
+	private JPanel panelDayFromTitle;
+	private JPanel panelDayFromValue;
+	private JLabel lblDayFromTitle;
+	private JPanel panelDayEndTitle;
+	private JPanel panelDayEndValue;
+	private JLabel lblDayEndTitle;
 	private JPanel panelCenterViewTable;
 	private JScrollPane scrollPaneCenterView;
 	private JTable tblCenterViewTable;
@@ -86,6 +103,20 @@ public class MainGUI {
 	private JTextArea taLogMessageView;
 	private JCheckBox chckbxAutoScrollLogs;
 	private Utils utils = new Utils();
+	private JPanel panelStartDay;
+	private JPanel panelStartMonth;
+	private JPanel panelStartYear;
+	private JPanel panelEndDay;
+	private JPanel panelEndMonth;
+	private JPanel panelEndYear;
+	private JComboBox<String> cbbStartDay;
+	private JComboBox<String> cbbStartMonth;
+	private JComboBox<String> cbbStartYear;
+	private JComboBox<String> cbbEndDay;
+	private JComboBox<String> cbbEndMonth;
+	private JComboBox<String> cbbEndYear;
+	private JPanel panelDateRange;
+	private JPanel panel;
 
 	/**
 	 * Launch the application.
@@ -171,12 +202,45 @@ public class MainGUI {
 		panelCenter.add(panelCenterViewTable);
 		panelCenterViewTable.setLayout(new GridLayout(1, 0, 0, 0));
 
-		String[] colNames = { "", "" };
-		Object[][] tableData = { { "", "" } };
+		// initialize table view
+		String[] colNames = { "", "", "" };
+		Object[][] tableData = { { "", "", "" } };
 		tblCenterViewTable = new JTable(tableData, colNames);
 		tblCenterViewTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		// initialize table row headers
+		ListModel<String> listModel = new AbstractListModel<String>() {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+			String[] rowHeaderTitles = { "KK", "K1", "K2", "K3", "K4", "K5", "K6", "K7", "K8", "K9", "K10", "K11",
+					"K12", "K13", "K14", "K15", "K16", "K17", "K18", "K19", "K20", "K21", "K22", "K23", "K24", "K25",
+					"K26" };
+
+			@Override
+			public String getElementAt(int arg0) {
+				// TODO Auto-generated method stub
+				return rowHeaderTitles[arg0];
+			}
+
+			@Override
+			public int getSize() {
+				// TODO Auto-generated method stub
+				return rowHeaderTitles.length;
+			}
+		};
+		JList<String> rowHeaders = new JList<>(listModel);
+		rowHeaders.setFixedCellWidth(35);
+		int height = tblCenterViewTable.getRowHeight();
+		int margin = tblCenterViewTable.getRowMargin();
+		System.out.println("- height+margin: " + height + "+" + margin);
+		rowHeaders.setFixedCellHeight(height);
+//		rowHeaders.setCellRenderer(new RowHeeaderRenderer(tblCenterViewTable));
+		tblCenterViewTable.setDefaultRenderer(Object.class, new ColorizedCellRenderer());
+
 		scrollPaneCenterView = new JScrollPane(tblCenterViewTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPaneCenterView.setRowHeaderView(rowHeaders);
 		tblCenterViewTable.setFillsViewportHeight(true);
 		panelCenterViewTable.add(scrollPaneCenterView);
 	}
@@ -184,43 +248,186 @@ public class MainGUI {
 	private void initLeftPanel() {
 		panelLeft = new JPanel();
 		frame.getContentPane().add(panelLeft, BorderLayout.WEST);
-		panelLeft.setLayout(new GridLayout(1, 0, 0, 0));
-		panelLeft.setPreferredSize(new Dimension(230, 300));
+		panelLeft.setPreferredSize(new Dimension(300, 350));
+		panelLeft.setLayout(new GridLayout(1, 1, 0, 0));
 
+		// init Settings Panel
 		panelSettings = new JPanel();
+		panelLeft.add(panelSettings);
 		panelSettings.setBorder(
 				new TitledBorder(null, "C\u00E0i \u0111\u1EB7t", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panelLeft.add(panelSettings);
-		panelSettings.setLayout(new GridLayout(4, 0, 0, 0));
+		GridBagLayout gbl_panelSettings = new GridBagLayout();
+		gbl_panelSettings.columnWidths = new int[] { 300, 0 };
+		gbl_panelSettings.rowHeights = new int[] { 100, 30, 30, 0, 0, 0 };
+		gbl_panelSettings.columnWeights = new double[] { 1.0, Double.MIN_VALUE };
+		gbl_panelSettings.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0 };
+		panelSettings.setLayout(gbl_panelSettings);
 
-		panelDayCountSettings = new JPanel();
-		panelSettings.add(panelDayCountSettings);
-		panelDayCountSettings.setLayout(new BorderLayout(0, 0));
+		// init Date Range panel
+		panelDateRange = new JPanel();
+		panelDateRange.setBorder(
+				new TitledBorder(null, "Kho\u1EA3ng qu\u00E9t", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		GridBagConstraints gbc_panelDateRange = new GridBagConstraints();
+		gbc_panelDateRange.anchor = GridBagConstraints.NORTH;
+		gbc_panelDateRange.fill = GridBagConstraints.HORIZONTAL;
+		gbc_panelDateRange.weightx = 1.0;
+		gbc_panelDateRange.insets = new Insets(0, 0, 5, 0);
+		gbc_panelDateRange.gridx = 0;
+		gbc_panelDateRange.gridy = 0;
+		panelSettings.add(panelDateRange, gbc_panelDateRange);
+		panelDateRange.setLayout(new GridLayout(3, 1, 0, 0));
 
-		panelDayCountTitle = new JPanel();
-		panelDayCountSettings.add(panelDayCountTitle, BorderLayout.WEST);
-		panelDayCountTitle.setLayout(new GridLayout(1, 0, 0, 0));
+		// init Message panel
+		panelMessage = new JPanel();
+		panelDateRange.add(panelMessage);
+		panelMessage.setLayout(new GridLayout(0, 1, 0, 0));
+		lblErrorMessage = new JLabel("");
+		lblErrorMessage.setForeground(Color.RED);
+		lblErrorMessage.setFont(new Font("Lucida Grande", Font.BOLD | Font.ITALIC, 11));
+		panelMessage.add(lblErrorMessage);
 
-		lblDayCountTitle = new JLabel("Số ngày quét: ");
-		panelDayCountTitle.add(lblDayCountTitle);
+		// init Date from panel
+		panelDateFromSettings = new JPanel();
+		panelDateRange.add(panelDateFromSettings);
+		panelDateFromSettings.setLayout(new BorderLayout(0, 0));
 
-		panelDayCountValue = new JPanel();
-		panelDayCountSettings.add(panelDayCountValue);
-		panelDayCountValue.setLayout(new GridLayout(1, 0, 0, 0));
+		panelDayFromTitle = new JPanel();
+		panelDateFromSettings.add(panelDayFromTitle, BorderLayout.WEST);
+		panelDayFromTitle.setLayout(new GridLayout(0, 1, 0, 0));
 
-		SpinnerModel spinnerDayCountModel = new SpinnerNumberModel(GeneralSettings.maxResultCount, 1, 300, 5);
-		spinnerDayCount = new JSpinner(spinnerDayCountModel);
-		spinnerDayCount.addChangeListener(new ChangeListener() {
+		lblDayFromTitle = new JLabel("Từ:   ");
+		panelDayFromTitle.add(lblDayFromTitle);
+
+		panelDayFromValue = new JPanel();
+		panelDateFromSettings.add(panelDayFromValue);
+		panelDayFromValue.setLayout(new GridLayout(0, 3, 0, 0));
+
+		panelStartDay = new JPanel();
+		panelDayFromValue.add(panelStartDay);
+		panelStartDay.setLayout(new GridLayout(0, 1, 0, 0));
+
+		cbbStartDay = new JComboBox<String>();
+		cbbStartDay.setModel(new DefaultComboBoxModel<String>(
+				new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
+						"17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31" }));
+		cbbStartDay.addItemListener(new ItemListener() {
+
 			@Override
-			public void stateChanged(ChangeEvent arg0) {
+			public void itemStateChanged(ItemEvent arg0) {
 				// TODO Auto-generated method stub
-				GeneralSettings.maxResultCount = (int) ((JSpinner) arg0.getSource()).getValue();
+				scanningPeriodCheck();
 			}
 		});
-		panelDayCountValue.add(spinnerDayCount);
+		panelStartDay.add(cbbStartDay);
+
+		panelStartMonth = new JPanel();
+		panelDayFromValue.add(panelStartMonth);
+		panelStartMonth.setLayout(new GridLayout(0, 1, 0, 0));
+
+		cbbStartMonth = new JComboBox<String>();
+		cbbStartMonth.setModel(new DefaultComboBoxModel<String>(
+				new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12" }));
+		cbbStartMonth.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent arg0) {
+				// TODO Auto-generated method stub
+				scanningPeriodCheck();
+			}
+		});
+		panelStartMonth.add(cbbStartMonth);
+
+		panelStartYear = new JPanel();
+		panelDayFromValue.add(panelStartYear);
+		panelStartYear.setLayout(new GridLayout(0, 1, 0, 0));
+
+		cbbStartYear = new JComboBox<String>();
+		cbbStartYear.setModel(new DefaultComboBoxModel<String>(new String[] { "-" }));
+		cbbStartYear.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent arg0) {
+				// TODO Auto-generated method stub
+				scanningPeriodCheck();
+			}
+		});
+		panelStartYear.add(cbbStartYear);
+
+		panelDateEndSettings = new JPanel();
+		panelDateRange.add(panelDateEndSettings);
+		panelDateEndSettings.setLayout(new BorderLayout(0, 0));
+
+		panelDayEndTitle = new JPanel();
+		panelDateEndSettings.add(panelDayEndTitle, BorderLayout.WEST);
+		panelDayEndTitle.setLayout(new GridLayout(1, 0, 0, 0));
+
+		lblDayEndTitle = new JLabel("Đến: ");
+		panelDayEndTitle.add(lblDayEndTitle);
+
+		panelDayEndValue = new JPanel();
+		panelDateEndSettings.add(panelDayEndValue);
+		panelDayEndValue.setLayout(new GridLayout(0, 3, 0, 0));
+
+		panelEndDay = new JPanel();
+		panelDayEndValue.add(panelEndDay);
+		panelEndDay.setLayout(new GridLayout(0, 1, 0, 0));
+
+		cbbEndDay = new JComboBox<String>();
+		cbbEndDay.setModel(new DefaultComboBoxModel<String>(
+				new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
+						"17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31" }));
+		cbbEndDay.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent arg0) {
+				// TODO Auto-generated method stub
+				scanningPeriodCheck();
+			}
+		});
+		panelEndDay.add(cbbEndDay);
+
+		panelEndMonth = new JPanel();
+		panelDayEndValue.add(panelEndMonth);
+		panelEndMonth.setLayout(new GridLayout(0, 1, 0, 0));
+
+		cbbEndMonth = new JComboBox<String>();
+		cbbEndMonth.setModel(new DefaultComboBoxModel<String>(
+				new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12" }));
+		cbbEndMonth.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent arg0) {
+				// TODO Auto-generated method stub
+				scanningPeriodCheck();
+			}
+		});
+		panelEndMonth.add(cbbEndMonth);
+
+		panelEndYear = new JPanel();
+		panelDayEndValue.add(panelEndYear);
+		panelEndYear.setLayout(new GridLayout(0, 1, 0, 0));
+
+		cbbEndYear = new JComboBox<String>();
+		cbbEndYear.setModel(new DefaultComboBoxModel<String>(new String[] { "-" }));
+		cbbEndYear.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent arg0) {
+				// TODO Auto-generated method stub
+				scanningPeriodCheck();
+			}
+		});
+		panelEndYear.add(cbbEndYear);
 
 		panelSortSettings = new JPanel();
-		panelSettings.add(panelSortSettings);
+		GridBagConstraints gbc_panelSortSettings = new GridBagConstraints();
+		gbc_panelSortSettings.weightx = 1.0;
+		gbc_panelSortSettings.anchor = GridBagConstraints.NORTH;
+		gbc_panelSortSettings.fill = GridBagConstraints.HORIZONTAL;
+		gbc_panelSortSettings.insets = new Insets(0, 0, 5, 0);
+		gbc_panelSortSettings.gridx = 0;
+		gbc_panelSortSettings.gridy = 1;
+		panelSettings.add(panelSortSettings, gbc_panelSortSettings);
 		panelSortSettings.setLayout(new BorderLayout(0, 0));
 
 		panelSortSettingsTitle = new JPanel();
@@ -250,20 +457,33 @@ public class MainGUI {
 		panelSortSettingsValue.add(chckbxSortSettingsValue);
 
 		panelAlwaysOnTopSettings = new JPanel();
-		panelSettings.add(panelAlwaysOnTopSettings);
-		JCheckBox cbAlwaysOnTop = new JCheckBox("Giữ cửa sổ luôn ở trên ");
-		cbAlwaysOnTop.addItemListener(new ItemListener() {
+		GridBagConstraints gbc_panelAlwaysOnTopSettings = new GridBagConstraints();
+		gbc_panelAlwaysOnTopSettings.insets = new Insets(0, 0, 5, 0);
+		gbc_panelAlwaysOnTopSettings.weightx = 1.0;
+		gbc_panelAlwaysOnTopSettings.anchor = GridBagConstraints.NORTH;
+		gbc_panelAlwaysOnTopSettings.fill = GridBagConstraints.HORIZONTAL;
+		gbc_panelAlwaysOnTopSettings.gridx = 0;
+		gbc_panelAlwaysOnTopSettings.gridy = 2;
+		panelSettings.add(panelAlwaysOnTopSettings, gbc_panelAlwaysOnTopSettings);
+		JCheckBox cbAlwaysOnTop_1 = new JCheckBox("Giữ cửa sổ luôn ở trên ");
+		cbAlwaysOnTop_1.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent arg0) {
 				// TODO Auto-generated method stub
-				setAlwaysOnTop(cbAlwaysOnTop.isSelected());
+				setAlwaysOnTop(cbAlwaysOnTop_1.isSelected());
 			}
 		});
 		panelAlwaysOnTopSettings.setLayout(new GridLayout(0, 1, 0, 0));
-		panelAlwaysOnTopSettings.add(cbAlwaysOnTop);
+		panelAlwaysOnTopSettings.add(cbAlwaysOnTop_1);
 
-		panel_3 = new JPanel();
-		panelSettings.add(panel_3);
+		panel = new JPanel();
+		GridBagConstraints gbc_panel = new GridBagConstraints();
+		gbc_panel.fill = GridBagConstraints.BOTH;
+		gbc_panel.gridx = 0;
+		gbc_panel.gridy = 3;
+		panelSettings.add(panel, gbc_panel);
+
+		updateDateRangeValue();
 	}
 
 	private void initRightPanel() {
@@ -398,7 +618,6 @@ public class MainGUI {
 		centerTableModel = new CenterViewTableModel(records);
 		tblCenterViewTable.setModel(centerTableModel);
 		setTableColumnWidth();
-
 		MessageCenter.appendMessageToSideLog("-- Đã cập nhật xong. Đang đóng hệ thống quét... ");
 		stopScanning();
 		MessageCenter.appendMessageToSideLog("-- Đã đóng hệ thống quét.");
@@ -418,5 +637,62 @@ public class MainGUI {
 
 	private void setAlwaysOnTop(boolean isOnTop) {
 		frame.setAlwaysOnTop(isOnTop);
+	}
+
+	private void updateDateRangeValue() {
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime lastWeek = now.minusDays(GeneralSettings.defaultDaysOfResultCount);
+		int currentYear = now.getYear();
+		String[] years = { (currentYear - 1) + "", currentYear + "" };
+		ComboBoxModel<String> yearModel = new DefaultComboBoxModel<>(years);
+		cbbEndYear.setModel(yearModel);
+		cbbStartYear.setModel(yearModel);
+		System.out.println("-- today: " + now.getDayOfMonth());
+
+		cbbEndDay.setSelectedIndex(now.getDayOfMonth() - 1); // minus 1 because combobox index starts from 0
+		cbbEndMonth.setSelectedIndex(now.getMonth().getValue() - 1);
+		cbbEndYear.setSelectedItem(currentYear + "");
+		cbbStartDay.setSelectedIndex(lastWeek.getDayOfMonth() - 1);
+		cbbStartMonth.setSelectedIndex(lastWeek.getMonth().getValue() - 1);
+		cbbStartYear.setSelectedItem(lastWeek.getYear() + "");
+	}
+
+	private void scanningPeriodCheck() {
+		lblErrorMessage.setText("");
+		try {
+			int startDay = Integer.parseInt((String) cbbStartDay.getSelectedItem());
+			int startMonth = Integer.parseInt((String) cbbStartMonth.getSelectedItem());
+			int startYear = Integer.parseInt((String) cbbStartYear.getSelectedItem());
+			int endDay = Integer.parseInt((String) cbbEndDay.getSelectedItem());
+			int endMonth = Integer.parseInt((String) cbbEndMonth.getSelectedItem());
+			int endYear = Integer.parseInt((String) cbbEndYear.getSelectedItem());
+
+			LocalDateTime startDate = generateDateTime(startDay, startMonth, startYear);
+			LocalDateTime endDate = generateDateTime(endDay, endMonth, endYear);
+			LocalDateTime now = LocalDateTime.now();
+
+			if ((now.isEqual(endDate) || now.isAfter(endDate)) && (now.isEqual(startDate) || now.isAfter(startDate))
+					&& (startDate.isEqual(endDate) || endDate.isAfter(startDate))) {
+				if (endDate.compareTo(startDate) > 300) {
+					throw new Exception("Date diff is more than 300");
+				} else {
+					GeneralSettings.defaultDaysOfResultCount = endDate.compareTo(startDate);
+					GeneralSettings.defaultEndDateOffset = now.compareTo(endDate);
+				}
+			} else {
+				throw new Exception("Invalid datetime");
+			}
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			lblErrorMessage.setText("Nhập ngày tháng chưa đúng!");
+		}
+
+	}
+
+	private LocalDateTime generateDateTime(int day, int month, int year) {
+		LocalDateTime date = LocalDateTime.of(year, month, day, 0, 0);
+		return date;
 	}
 }

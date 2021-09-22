@@ -63,13 +63,19 @@ public class ResultCrawler implements Runnable {
 		Select source = new Select(driver.findElement(By.xpath(xpathToResultSource)));
 		source.selectByValue("mb");
 		WebElement date = driver.findElement(By.xpath(xpathToReaultDate));
-		LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
-		String currentDate = now.getDayOfMonth() + "-" + now.getMonthValue() + "-" + now.getYear();
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime startDate = now.minusDays(GeneralSettings.defaultEndDateOffset);
+		String resultStartDate = startDate.getDayOfMonth() + "-" + startDate.getMonthValue() + "-"
+				+ startDate.getYear();
 		date.clear();
-		date.sendKeys(currentDate);
+		date.sendKeys(resultStartDate);
 		WebElement count = driver.findElement(By.xpath(xpathToResultDayCount));
 		count.clear();
-		count.sendKeys(GeneralSettings.maxResultCount + "");
+		count.sendKeys((GeneralSettings.defaultDaysOfResultCount + 1) + ""); // days of result count will be calculated
+																				// based on the difference of start and
+																				// end dates. In this case, the
+																				// difference will not count the current
+																				// day
 		count.click(); // to dismiss the date picker
 		driver.findElement(By.xpath(xpathToResultSubmitButton)).click();
 		MessageCenter.appendMessageToSideLog("-- Đang chờ máy chủ cập nhật... ");

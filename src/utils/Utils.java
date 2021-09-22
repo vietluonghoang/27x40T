@@ -220,7 +220,7 @@ public class Utils {
 	}
 
 	public long getNumberOfDaySinceEpochTime() {
-		LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+		LocalDateTime now = LocalDateTime.now();
 		LocalDateTime then = LocalDateTime.of(1970, Month.JANUARY, 1, 0, 0);
 		Duration duration = Duration.between(then, now);
 
